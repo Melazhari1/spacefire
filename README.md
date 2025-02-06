@@ -22,7 +22,7 @@ A simple space shooter game built with JavaScript. Control your spaceship, shoot
 ## Installation & Running  
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/space-shooter.git
+   git clone [https://github.com/yourusername/space-shooter.git](https://github.com/Melazhari1/spacefire.git)
    ```
 2. Open `index.html` in your browser.  
 

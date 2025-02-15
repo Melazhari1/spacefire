@@ -1,13 +1,23 @@
 const canvas = document.getElementById("gamecanvas");
 const ctx = canvas.getContext("2d");
+const restartBtn = document.getElementById("restartBtn");
+
 let score = 0;
 let gameOver = false;
-let timeLeft = 60;
+let timeLeft = 2;
+let gameOverPlayed = false;
+let canShoot = true;
+let keys = {};
 
 import Player from "./player.js";
 import Enemy from "./enemy.js";
 import Background from "./background.js";
 import Bullet from "./bullet.js";
+
+
+const shootSound = new Audio("sounds/shoot.mp3");
+const explosionSound = new Audio("sounds/explosion.wav");
+const gameOverSound = new Audio("sounds/gameover.mp3");
 
 window.canvas = canvas;
 window.ctx = ctx;
@@ -30,6 +40,11 @@ function showGameOver() {
   ctx.fillStyle = "White";
   ctx.font = "30px Arial";
   ctx.fillText("Score : "+score,canvas.width / 2 - 60, canvas.height / 2 + 60);
+  restartBtn.style.display = "block";
+  if (!gameOverPlayed) { 
+    gameOverSound.play();
+    gameOverPlayed = true;
+}
 }
 
 //background
@@ -59,18 +74,55 @@ setInterval(() => {
   enemies.push(new Enemy(enemyImg));
 }, 1000);
 
-document.addEventListener("keydown", (event) => {
-  console.log(event.key);
-  if (event.key == "ArrowLeft") {
-    player.move("left");
+window.addEventListener("keydown", (event) => {
+  keys[event.code] = true;
+});
+
+window.addEventListener("keyup", (event) => {
+  keys[event.code] = false;
+});
+
+function updatePlayer() {
+  if (keys["ArrowLeft"] && player.x > 0) {
+      player.move("left");
   }
-  if (event.key == "ArrowRight") {
+  if (keys["ArrowRight"] && player.x + player.width < canvas.width) {
     player.move("right");
   }
+}
 
-  if (event.key == " ") {
-    bullets.push(new Bullet(player.x, player.y));
+function handleShooting() {
+  if (keys["Space"] && canShoot) {
+      bullets.push(new Bullet(player.x, player.y));
+      canShoot = false;
+      setTimeout(() => {
+          canShoot = true;
+          shootSound.currentTime = 0;
+      }, 300); 
   }
+}
+
+
+
+restartBtn.addEventListener("click", () => {
+  score = 0;
+  timeLeft = 60;
+  gameOver = false;
+  bullets.length = 0;
+  enemies.length = 0;
+
+  restartBtn.style.display = "none"; 
+
+  timerInterval = setInterval(() => {
+      if (timeLeft > 0) {
+          timeLeft--;
+      } else {
+          gameOver = true;
+          clearInterval(timerInterval);
+      }
+  }, 1000);
+
+  gameLoop();
 });
 
 function isCollision(rect1, rect2) {
@@ -89,6 +141,8 @@ function gameLoop() {
 
   if (!gameOver) {
     //draw player
+    updatePlayer();
+    handleShooting();
     player.draw();
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
@@ -117,6 +171,9 @@ function gameLoop() {
           enemies.splice(enemyIndex, 1);
           bullets.splice(bulletIndex, 1);
           score += 10;
+          explosionSound.currentTime = 0;
+          explosionSound.volume = 0.1;
+          explosionSound.play();
         }
       });
       if (enemy.y > canvas.height) {
@@ -129,5 +186,6 @@ function gameLoop() {
 
   requestAnimationFrame(gameLoop);
 }
+
 
 gameLoop();
